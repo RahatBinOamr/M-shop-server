@@ -17,19 +17,22 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 function run (){
 try{
     const categoryCollection = client.db('usedPhone').collection('category')
-
+    const phonesCollection = client.db('usedPhone').collection('phone')
+    app.get('/phones',async(req,res)=>{
+        const filter = {}
+        const result = await phonesCollection.find(filter).toArray()
+        console.log(result)
+        res.send(result)
+    })
     app.get("/CoursesCategory",async(req,res)=>{
         const filter = {}
         const result = await  categoryCollection.find(filter).toArray()
-        console.log(result)
+        // console.log(result)
         res.send(result)
       })
 
-
-
-
 }
-finally{
+catch{
 
 }
 }
