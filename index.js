@@ -1,5 +1,5 @@
 const express = require('express');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const cors = require('cors');
 require('dotenv').config()
 const app = express()
@@ -24,6 +24,13 @@ try{
         console.log(result)
         res.send(result)
     })
+    app.get('/phones/:id',async(req,res)=>{
+        const id = req.params.id;
+        const filter = {_id: ObjectId(id)}
+        const phonesId = await phonesCollection.findOne(filter);
+        console.log(phonesId);
+        res.send(phonesId)
+    })
     app.get("/CoursesCategory",async(req,res)=>{
         const filter = {}
         const result = await  categoryCollection.find(filter).toArray()
@@ -32,7 +39,7 @@ try{
       })
 
 }
-catch{
+finally{
 
 }
 }
