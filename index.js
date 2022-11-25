@@ -19,6 +19,8 @@ function run() {
   try {
     const categoryCollection = client.db("usedPhone").collection("category");
     const phonesCollection = client.db("usedPhone").collection("phone");
+    const bookingsCollection = client.db('usedPhone').collection('bookings');
+    const usersCollection = client.db('usedPhone').collection('users');
     app.get("/phones", async (req, res) => {
       const filter = {};
       const result = await phonesCollection.find(filter).toArray();
@@ -32,13 +34,13 @@ function run() {
       console.log(phonesId);
       res.send(phonesId);
     });
-    app.get("/phonesCategory", async (req, res) => {
+    app.get("/category", async (req, res) => {
       const filter = {};
       const result = await categoryCollection.find(filter).toArray();
       // console.log(result)
       res.send(result);
     });
-    app.get("/phonesCategory/:id", async (req, res) => {
+    app.get("/category/:id", async (req, res) => {
       const id = req.params.id;
       const category_id =req.params.id;
       const query = {category_id:category_id}
@@ -46,6 +48,7 @@ function run() {
         const filter = {};
         const result = await phonesCollection.find(filter).toArray();
         res.send(result);
+        console.log(result);
       } 
       else{
         const categoryId = await phonesCollection.find(query).toArray()
@@ -53,6 +56,37 @@ function run() {
         res.send(categoryId)
       }
     });
+
+    /* Booking collection */
+    app.post('/bookings', async (req, res) => {
+      const booking = req.body;
+      console.log(booking);
+      const query = {
+          date: booking.date,
+          email: booking.email,
+          title: booking.title,
+          price:booking.price
+      }
+
+      const alreadyBooked = await bookingsCollection.find(query).toArray();
+
+      if (alreadyBooked.length){
+          const message = `You already have a booking on ${booking.date}`
+          return res.send({acknowledged: false, message})
+      }
+
+      const result = await bookingsCollection.insertOne(booking);
+      res.send(result);
+  })
+
+
+    /* User Collection */
+    app.post('/users', async (req, res) => {
+      const user = req.body;
+      console.log(user);
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+  });
   } finally {
   }
 }
