@@ -3,9 +3,9 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const cors = require("cors");
 var jwt = require('jsonwebtoken');
 require("dotenv").config();
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const app = express();
 const port = process.env.PORT || 5000;
-
 app.use(cors());
 app.use(express.json());
 
@@ -42,6 +42,7 @@ function run() {
     const phonesCollection = client.db("usedPhone").collection("phone");
     const bookingsCollection = client.db('usedPhone').collection('bookings');
     const usersCollection = client.db('usedPhone').collection('users');
+    const paymentsCollection = client.db('doctorsPortal').collection('payments');
     app.get("/phones", async (req, res) => {
       const filter = {};
       const result = await phonesCollection.find(filter).toArray();
@@ -58,6 +59,12 @@ function run() {
     /* Add phones */
 
     app.post("/phoneAdd", async (req, res) => {
+      /* const email = req.query.email;
+      const decodedEmail = req.decoded.email;
+
+      if (email !== decodedEmail) {
+          return res.status(403).send({ message: 'forbidden access' });
+      } */
       const filter = req.body;
       console.log(filter)
       const result = await phonesCollection.insertOne(filter);
@@ -71,12 +78,7 @@ function run() {
       res.send(service);
     });
 
-    /* app.get('/phoneAdd',async(req,res)=>{
-      const query = {}
-      const result = await categoryCollection.find(query).project({id: 1}).toArray()
-      console.log(result);
-      res.send(result)
-    }) */
+    
     app.get("/category", async (req, res) => {
       const filter = {};
       const result = await categoryCollection.find(filter).toArray();
@@ -113,6 +115,46 @@ function run() {
       // console.log(bookings);
       res.send(bookings);
   })
+/* payment  */
+app.get('/bookings/:id', async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: ObjectId(id) };
+  const booking = await bookingsCollection.findOne(query);
+  res.send(booking);
+})
+/* Payment intent  */
+
+app.post('/create-payment-intent', async (req, res) => {
+  const booking = req.body;
+  const price = booking.price;
+  const amount = price * 100;
+
+  const paymentIntent = await stripe.paymentIntents.create({
+      currency: 'usd',
+      amount: amount,
+      "payment_method_types": [
+          "card"
+      ]
+  });
+  res.send({
+      clientSecret: paymentIntent.client_secret,
+  });
+});
+
+app.post('/payments', async (req, res) =>{
+  const payment = req.body;
+  const result = await paymentsCollection.insertOne(payment);
+  const id = payment.bookingId
+  const filter = {_id: ObjectId(id)}
+  const updatedDoc = {
+      $set: {
+          paid: true,
+          transactionId: payment.transactionId
+      }
+  }
+  const updatedResult = await bookingsCollection.updateOne(filter, updatedDoc)
+  res.send(result);
+})
 
     /* Booking collection */
     app.post('/bookings', async (req, res) => {
