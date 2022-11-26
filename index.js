@@ -55,6 +55,28 @@ function run() {
       // console.log(phonesId);
       res.send(phonesId);
     });
+    /* Add phones */
+
+    app.post("/phoneAdd", async (req, res) => {
+      const filter = req.body;
+      console.log(filter)
+      const result = await phonesCollection.insertOne(filter);
+      res.send(result);
+    });
+
+    app.get("/phoneAdd", async (req, res) => {
+      const filter = {};
+      const cursor = phonesCollection.find(filter).sort({ $natural: -1 });
+      const service = await cursor.toArray();
+      res.send(service);
+    });
+
+    /* app.get('/phoneAdd',async(req,res)=>{
+      const query = {}
+      const result = await categoryCollection.find(query).project({id: 1}).toArray()
+      console.log(result);
+      res.send(result)
+    }) */
     app.get("/category", async (req, res) => {
       const filter = {};
       const result = await categoryCollection.find(filter).toArray();
@@ -124,8 +146,15 @@ function run() {
     const users = await usersCollection.find(query).toArray();
     res.send(users);
 });
+/* Check Admin  */
+app.get('/users/admin/:email', async (req, res) => {
+  const email = req.params.email;
+  const query = { email }
+  const user = await usersCollection.findOne(query);
+  res.send({ isAdmin: user?.role === 'admin' });
+})
 /* handel make admin */
-app.put('/users/admin/:id', async (req, res) => {
+app.put('/users/admin/:id',verifyJWT, async (req, res) => {
   const decodedEmail = req.decoded.email;
   const query = { email: decodedEmail };
   const user = await usersCollection.findOne(query);
