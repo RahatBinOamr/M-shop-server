@@ -15,6 +15,26 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
 });
+
+function verifyJWT(req, res, next) {
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+      return res.status(401).send('unauthorized access');
+  }
+
+  const token = authHeader.split(' ')[1];
+
+  jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
+      if (err) {
+          return res.status(403).send({ message: 'forbidden access' })
+      }
+      req.decoded = decoded;
+      next();
+  })
+
+}
+
 function run() {
   try {
     const categoryCollection = client.db("usedPhone").collection("category");
@@ -57,6 +77,19 @@ function run() {
       }
     });
 
+    app.get('/bookings', verifyJWT, async (req, res) => {
+      const email = req.query.email;
+      const decodedEmail = req.decoded.email;
+
+      if (email !== decodedEmail) {
+          return res.status(403).send({ message: 'forbidden access' });
+      }
+
+      const query = { email: email };
+      const bookings = await bookingsCollection.find(query).toArray();
+      res.send(bookings);
+  })
+
     /* Booking collection */
     app.post('/bookings', async (req, res) => {
       const booking = req.body;
@@ -78,6 +111,7 @@ function run() {
       const result = await bookingsCollection.insertOne(booking);
       res.send(result);
   })
+
 
 
     /* User Collection */
