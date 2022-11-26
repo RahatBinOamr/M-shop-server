@@ -77,13 +77,13 @@ function run() {
       }
     });
 
-    app.get('/bookings', verifyJWT, async (req, res) => {
+    app.get('/bookings',  async (req, res) => {
       const email = req.query.email;
-      const decodedEmail = req.decoded.email;
+      // const decodedEmail = req.decoded.email;
 
-      if (email !== decodedEmail) {
-          return res.status(403).send({ message: 'forbidden access' });
-      }
+      // if (email !== decodedEmail) {
+      //     return res.status(403).send({ message: 'forbidden access' });
+      // }
 
       const query = { email: email };
       const bookings = await bookingsCollection.find(query).toArray();
@@ -112,7 +112,16 @@ function run() {
       res.send(result);
   })
 
-
+  app.get('/jwt', async (req, res) => {
+    const email = req.query.email;
+    const query = { email: email };
+    const user = await usersCollection.findOne(query);
+    if (user) {
+        const token = jwt.sign({ email }, process.env.ACCESS_TOKEN )
+        return res.send({ accessToken: token });
+    }
+    res.status(403).send({ accessToken: '' })
+});
 
     /* User Collection */
     app.post('/users', async (req, res) => {
