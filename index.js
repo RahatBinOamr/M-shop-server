@@ -185,6 +185,15 @@ app.post('/payments', async (req, res) =>{
     }
     res.status(403).send({ accessToken: '' })
 });
+/* Beyer */
+app.get("/beyer", async (req, res) => {
+  const query = {};
+  const cursor = usersCollection.find(query);
+  const user = await cursor.toArray();
+  const result = user.filter((u) => u.type == "Beyer")
+  res.send(result);
+
+});
 
     /* User info */
     app.post('/users', async (req, res) => {
