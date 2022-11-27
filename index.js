@@ -42,7 +42,8 @@ function run() {
     const phonesCollection = client.db("usedPhone").collection("phone");
     const bookingsCollection = client.db('usedPhone').collection('bookings');
     const usersCollection = client.db('usedPhone').collection('users');
-    const paymentsCollection = client.db('doctorsPortal').collection('payments');
+    const paymentsCollection = client.db('usedPhone').collection('payments');
+    const reportCollection = client.db('usedPhone').collection('report');
     app.get("/phones", async (req, res) => {
       const filter = {};
       const result = await phonesCollection.find(filter).toArray();
@@ -85,6 +86,16 @@ function run() {
       // console.log(result)
       res.send(result);
     });
+    app.post('/report',async(req,res)=>{
+      const product= req.body;
+      const result = await reportCollection.insertOne(product)
+      res.send(result)
+    })
+    app.get('/report',async(req,res)=>{
+      const filter = {};
+      const result = await reportCollection.find(filter).toArray();
+      res.send(result)
+    })
     app.get("/category/:id", async (req, res) => {
       const id = req.params.id;
       const category_id =req.params.id;
@@ -188,6 +199,13 @@ app.post('/payments', async (req, res) =>{
     const users = await usersCollection.find(query).toArray();
     res.send(users);
 });
+/* delete user */
+app.delete('/users',async(req,res)=>{
+  const id = req.body._id;
+  const filter = {_id: ObjectId(id)};
+  const result = await usersCollection.deleteOne(filter)
+  res.send(result)
+})
 /* Check Admin  */
 app.get('/users/admin/:email', async (req, res) => {
   const email = req.params.email;
